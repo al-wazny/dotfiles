@@ -21,6 +21,8 @@ return {
              },
 	})
 
-	vim.keymap.set('n', '<leader>tt', '<cmd>NvimTreeToggle<CR>', { desc = '[T]oggle [T]ree' })
+	vim.keymap.set('n', '<leader>tt', '<cmd>NvimTreeToggle<CR>', { desc = '[T]ree [T]oggle' })
+	vim.keymap.set('n', '<leader>tf', '<cmd>NvimTreeFindFileToggle<CR>', { desc = '[T]tree [F]ind File' })
+	vim.keymap.set('n', '<leader>tc', '<cmd>NvimTreeCollapse<CR>', { desc = '[T]ree [C]ollapse' })
     end
 }
