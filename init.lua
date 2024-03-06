@@ -40,6 +40,10 @@ P.S. You can delete this when you're done too. It's your config now :)
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
+vim.g.copilot_no_tab_map = true
+vim.api.nvim_set_keymap("i", "<C-j>", 'copilot#Accept("<CR>")', {expr = true, silent = true})
+vim.api.nvim_set_keymap("i", "<C-k>", 'copilot#Next()', {expr=true, silent=true})
+vim.api.nvim_set_keymap("i", "<C-l>", 'copilot#Previous()', {expr=true, silent=true})
 
 -- Install package manager
 --    https://github.com/folke/lazy.nvim
@@ -64,7 +68,7 @@ vim.opt.rtp:prepend(lazypath)
 --    as they will be available in your neovim runtime.
 require('lazy').setup({
   -- NOTE: First, some plugins that don't require any configuration
-  'lumiliet/vim-twig',
+  'friendsoftwig/twigcs',
 
   -- Git related plugins
   'tpope/vim-fugitive',
@@ -214,6 +218,7 @@ vim.o.hlsearch = false
 
 -- Make line numbers default
 vim.wo.number = true
+vim.wo.relativenumber = true
 
 -- Enable mouse mode
 vim.o.mouse = 'a'
@@ -302,6 +307,8 @@ vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { de
 vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
 vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostics' })
 
+vim.keymap.set({"n", "v"}, "<leader>y", [["+y]])
+
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
 require('nvim-treesitter.configs').setup {
@@ -309,7 +316,14 @@ require('nvim-treesitter.configs').setup {
   ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'typescript', 'vimdoc', 'vim', 'php' },
 
   -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
-  auto_install = false,
+  auto_install = true,
+  autotag = {
+    enable = true,
+    enable_rename = true,
+    enable_close = true,
+    enable_close_on_slash = true,
+    filetypes = { "html" , "xml", "twig" },
+  },
 
   highlight = { enable = true },
   indent = { enable = true },
