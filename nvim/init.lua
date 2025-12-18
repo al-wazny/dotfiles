@@ -77,6 +77,19 @@ require('lazy').setup({
   -- Detect tabstop and shiftwidth automatically
   'tpope/vim-sleuth',
 
+  {
+    "windwp/nvim-ts-autotag",
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    opts = {
+      autotag = {
+        enable = true,
+        enable_rename = true,
+        enable_close = true,
+        enable_close_on_slash = true,
+        filetypes = { "html" , "xml" },
+      },
+    },
+  },
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
   {
@@ -127,7 +140,7 @@ require('lazy').setup({
         changedelete = { text = '~' },
       },
       on_attach = function(bufnr)
-        vim.keymap.set('n', '<leader>gp', require('gitsigns').prev_hunk, { buffer = bufnr, desc = '[G]o to P]revious Hunk' })
+        vim.keymap.set('n', '<leader>gp', require('gitsigns').prev_hunk, { buffer = bufnr, desc = '[G]o to [P]revious Hunk' })
         vim.keymap.set('n', '<leader>gn', require('gitsigns').next_hunk, { buffer = bufnr, desc = '[G]o to [N]ext Hunk' })
         vim.keymap.set('n', '<leader>ph', require('gitsigns').preview_hunk, { buffer = bufnr, desc = '[P]review [H]unk' })
       end,
@@ -307,7 +320,16 @@ vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { de
 vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
 vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostics' })
 
-vim.keymap.set({"n", "v"}, "<leader>y", [["+y]])
+-- Nvim DAP
+vim.keymap.set("n", "<Leader>dl", require('dap').step_into, { desc = "Debugger step into" })
+vim.keymap.set("n", "<Leader>dj", require('dap').step_over, { desc = "Debugger step over" })
+vim.keymap.set("n", "<Leader>dk", require('dap').step_out, { desc = "Debugger step out" })
+vim.keymap.set("n", "<Leader>dc", require('dap').continue, { desc = "Debugger continue" })
+vim.keymap.set("n", "<Leader>db", require('dap').toggle_breakpoint, { desc = "Debugger toggle breakpoint" })
+-- vim.keymap.set("n", "<Leader>dd", require('dap').set_breakpoint(vim.fn.input('Breakpoint condition: ')), { desc = "Debugger set conditional breakpoint" })
+vim.keymap.set("n", "<Leader>de", require('dap').terminate, { desc = "Debugger reset" })
+vim.keymap.set("n", "<Leader>dr", require('dap').run_last, { desc = "Debugger run last" })
+
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
@@ -325,7 +347,10 @@ require('nvim-treesitter.configs').setup {
     filetypes = { "html" , "xml", "twig" },
   },
 
-  highlight = { enable = true },
+  highlight = {
+    enable = true,
+    additional_vim_regex_highlighting = false,
+  },
   indent = { enable = true },
   incremental_selection = {
     enable = true,
@@ -388,20 +413,12 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnos
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
 
--- [[ Configure LSP ]]
---  This function gets run when an LSP connects to a particular buffer.
-local on_attach = function(_, bufnr)
-  -- NOTE: Remember that lua is a real programming language, and as such it is possible
-  -- to define small helper and utility functions so you don't have to repeat yourself
-  -- many times.
-  --
-  -- In this case, we create a function that lets us more easily define mappings specific
-  -- for LSP related items. It sets the mode, buffer and description for us each time.
-  local nmap = function(keys, func, desc)
-    if desc then
-      desc = 'LSP: ' .. desc
-    end
 
+-- [[ Configure LSP ]]
+-- Function to run when an LSP attaches to a buffer
+local on_attach = function(_, bufnr)
+  local nmap = function(keys, func, desc)
+    if desc then desc = 'LSP: ' .. desc end
     vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
   end
 
@@ -415,11 +432,9 @@ local on_attach = function(_, bufnr)
   nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
   nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
 
-  -- See `:help K` for why this keymap
   nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
   nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
 
-  -- Lesser used LSP functionality
   nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
   nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
   nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
@@ -427,24 +442,52 @@ local on_attach = function(_, bufnr)
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
 
-  -- Create a command `:Format` local to the LSP buffer
   vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
     vim.lsp.buf.format()
   end, { desc = 'Format current buffer with LSP' })
 end
 
--- Enable the following language servers
---  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
---
---  Add any additional override configuration in the following tables. They will be passed to
---  the `settings` field of the server config. You must look up that documentation yourself.
-local servers = {
-  -- clangd = {},
-  -- gopls = {},
-  -- pyright = {},
-  -- rust_analyzer = {},
-  -- tsserver = {},
+-- Setup neovim lua configuration
+require('neodev').setup()
 
+-- nvim-cmp capabilities
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
+
+-- Define servers
+local servers = {
+  pyright = {},
+  rust_analyzer = {
+    on_attach=on_attach,
+    settings = {
+      ["rust-analyzer"] = {
+        imports = {
+          granularity = {
+            group = "module",
+          },
+          prefix = "self",
+        },
+        cargo = {
+          buildScripts = {
+            enable = true,
+          },
+        },
+        procMacro = {
+          enable = true
+        },
+        add_return_type = {
+          enable = true
+        },
+        inlayHints = {
+          enable = true,
+          showParameterNames = true,
+          parameterHintsPrefix = "<- ",
+          otherHintsPrefix = "=> ",
+        },
+      }
+    }
+  },
+  ts_ls = {},
   lua_ls = {
     Lua = {
       workspace = { checkThirdParty = false },
@@ -453,29 +496,18 @@ local servers = {
   },
 }
 
--- Setup neovim lua configuration
-require('neodev').setup()
+-- Setup Mason and ensure servers are installed
+require('mason').setup()
+local mason_lspconfig = require('mason-lspconfig')
+mason_lspconfig.setup({
+    ensure_installed = vim.tbl_keys(servers),
+})
 
--- nvim-cmp supports additional completion capabilities, so broadcast that to servers
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
-
--- Ensure the servers above are installed
-local mason_lspconfig = require 'mason-lspconfig'
-
-mason_lspconfig.setup {
-  ensure_installed = vim.tbl_keys(servers),
-}
-
-mason_lspconfig.setup_handlers {
-  function(server_name)
-    require('lspconfig')[server_name].setup {
-      capabilities = capabilities,
-      on_attach = on_attach,
-      settings = servers[server_name],
-    }
-  end,
-}
+-- Enable LSP servers using the new vim.lsp.config API
+for server_name, server_opts in pairs(servers) do
+    vim.lsp.config(server_name, server_opts)
+    vim.lsp.enable(server_name)
+end
 
 -- [[ Configure nvim-cmp ]]
 -- See `:help cmp`
@@ -524,6 +556,11 @@ cmp.setup {
     { name = 'luasnip' },
   },
 }
-
+-- Hide semantic highlights for functions
+-- vim.api.nvim_set_hl(0, '@lsp.type.function', {})
+-- Hide all semantic highlights
+for _, group in ipairs(vim.fn.getcompletion("@lsp", "highlight")) do
+ vim.api.nvim_set_hl(0, group, {})
+end
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et[
